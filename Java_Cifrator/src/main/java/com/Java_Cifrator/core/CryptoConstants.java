@@ -1,6 +1,6 @@
 package com.Java_Cifrator.core;
 public final class CryptoConstants {
-    private CryptoConstants() {} // Prevenir instanciación
+    private CryptoConstants() {}
 
     public static final String PBKDF2_ALGORITHM = "PBKDF2WithHmacSHA256";
     public static final String AES_ALGORITHM = "AES/CBC/PKCS5Padding";

@@ -9,7 +9,7 @@ public class HashService {
         return digest.digest(data);
     }
 
-    public String bytesToHex(byte[] hash) { // Mover el helper aquí
+    public String bytesToHex(byte[] hash) {
         StringBuilder hexString = new StringBuilder(2 * hash.length);
         for (byte b : hash) {
             String hex = Integer.toHexString(0xff & b);

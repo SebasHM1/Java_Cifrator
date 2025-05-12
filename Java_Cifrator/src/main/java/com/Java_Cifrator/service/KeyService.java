@@ -27,7 +27,7 @@ public class KeyService {
         return salt;
     }
 
-    public byte[] generateIV() { // Movimos la generación de IV aquí también
+    public byte[] generateIV() {
         SecureRandom random = new SecureRandom();
         byte[] iv = new byte[CryptoConstants.IV_LENGTH_BYTES];
         random.nextBytes(iv);

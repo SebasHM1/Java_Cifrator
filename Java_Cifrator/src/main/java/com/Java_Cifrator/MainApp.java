@@ -1,6 +1,5 @@
 package com.Java_Cifrator;
 
-import com.Java_Cifrator.core.CryptoConstants;
 import com.Java_Cifrator.service.CryptoService;
 import com.Java_Cifrator.service.FileHandler;
 import com.Java_Cifrator.service.HashService;
@@ -41,25 +40,39 @@ public class MainApp {
 
     private static boolean menu (Scanner scanner, CryptoService cryptoService) throws Exception {
 
-        System.out.println("Seleccione una opción:");
-        System.out.println("1) Cifrar archivo");
-        System.out.println("2) Descifrar archivo");
-        System.out.print("Opción: ");
-        int choice = Integer.parseInt(scanner.nextLine());
+        System.out.println("""
+                Seleccione una opcion:
+                
+                1) Cifrar archivo 
+                2) Descifrar archivo
+                3) Salir
+                
+                """);
 
-        System.out.print("Ingrese la ruta del archivo de entrada: ");
-        String inputFile = scanner.nextLine();
-        System.out.print("Ingrese la ruta del archivo de salida: ");
-        String outputFile = scanner.nextLine();
-        System.out.print("Ingrese la contraseña: ");
-        String password = scanner.nextLine();
+        int choice = Integer.parseInt(scanner.nextLine());
 
         try {
             if (choice == 1) {
+
+                System.out.print("Ingrese la ruta del archivo de entrada: ");
+                String inputFile = scanner.nextLine();
+                System.out.print("Ingrese la ruta del archivo de salida: ");
+                String outputFile = scanner.nextLine();
+                System.out.print("Ingrese la contraseña: ");
+                String password = scanner.nextLine();
+
                 cryptoService.encryptFile(inputFile, outputFile, password);
                 System.out.println("Archivo cifrado correctamente en: " + outputFile);
                 return false;
             } else if (choice == 2) {
+
+                System.out.print("Ingrese la ruta del archivo de entrada: ");
+                String inputFile = scanner.nextLine();
+                System.out.print("Ingrese la ruta del archivo de salida: ");
+                String outputFile = scanner.nextLine();
+                System.out.print("Ingrese la contraseña: ");
+                String password = scanner.nextLine();
+
                 cryptoService.decryptFileAndVerify(inputFile, outputFile, password);
                 return false;
             } else if (choice == 3) {
