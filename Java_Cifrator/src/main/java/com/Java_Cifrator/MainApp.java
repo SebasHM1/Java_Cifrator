@@ -1,6 +1,7 @@
 package com.Java_Cifrator;
 
 import com.Java_Cifrator.core.CryptoConstants;
+import com.Java_Cifrator.service.HashService;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -25,6 +26,7 @@ public class MainApp {
     private static final int SALT_LENGTH_BYTES = CryptoConstants.SALT_LENGTH_BYTES; // 128 bits para el salt
     private static final int IV_LENGTH_BYTES = CryptoConstants.IV_LENGTH_BYTES;  // 128 bits para el IV (AES block size)
     private static final Scanner scanner = new Scanner(System.in);
+    private static final HashService hashService = new HashService();
 
     public static void main(String[] args) {
         boolean exit = false;
@@ -99,7 +101,7 @@ public class MainApp {
             throws Exception {
 
         byte[] fileBytes = Files.readAllBytes(Paths.get(inputFilePath));
-        byte[] originalHash = calculateSHA256(fileBytes);
+        byte[] originalHash = hashService.calculateSHA256(fileBytes);
 
         byte[] salt = generateSalt();
         SecretKey secretKey = generateKey(password, salt);
@@ -169,34 +171,15 @@ public class MainApp {
         System.out.println("Archivo descifrado (potencialmente) en: " + outputFilePath);
 
         // Verificar integridad
-        byte[] newHash = calculateSHA256(decryptedBytes);
+        byte[] newHash = hashService.calculateSHA256(decryptedBytes);
 
         if (Arrays.equals(newHash, storedHash)) {
             System.out.println("Verificación de integridad: ÉXITO. El hash coincide.");
         } else {
             System.out.println("Verificación de integridad: FALLO. El hash NO coincide.");
-            System.out.println("Hash esperado: " + bytesToHex(storedHash));
-            System.out.println("Hash calculado: " + bytesToHex(newHash));
+            System.out.println("Hash esperado: " + hashService.bytesToHex(storedHash));
+            System.out.println("Hash calculado: " + hashService.bytesToHex(newHash));
         }
     }
 
-    // Helper para mostrar el hash en formato hexadecimal (opcional, para depuración)
-    private static String bytesToHex(byte[] hash) {
-        StringBuilder hexString = new StringBuilder(2 * hash.length);
-        for (byte b : hash) {
-            String hex = Integer.toHexString(0xff & b);
-            if (hex.length() == 1) {
-                hexString.append('0');
-            }
-            hexString.append(hex);
-        }
-        return hexString.toString();
-    }
-
-    // Dentro de la clase FileEncryptorDecryptor
-
-    private static byte[] calculateSHA256(byte[] data) throws NoSuchAlgorithmException {
-        MessageDigest digest = MessageDigest.getInstance(HASH_ALGORITHM);
-        return digest.digest(data);
-    }
 }
