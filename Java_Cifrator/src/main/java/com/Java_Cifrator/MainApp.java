@@ -2,6 +2,7 @@ package com.Java_Cifrator;
 
 import com.Java_Cifrator.core.CryptoConstants;
 import com.Java_Cifrator.service.HashService;
+import com.Java_Cifrator.service.KeyService;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -27,6 +28,7 @@ public class MainApp {
     private static final int IV_LENGTH_BYTES = CryptoConstants.IV_LENGTH_BYTES;  // 128 bits para el IV (AES block size)
     private static final Scanner scanner = new Scanner(System.in);
     private static final HashService hashService = new HashService();
+    private static final KeyService keyService = new KeyService();
 
     public static void main(String[] args) {
         boolean exit = false;
@@ -103,14 +105,12 @@ public class MainApp {
         byte[] fileBytes = Files.readAllBytes(Paths.get(inputFilePath));
         byte[] originalHash = hashService.calculateSHA256(fileBytes);
 
-        byte[] salt = generateSalt();
-        SecretKey secretKey = generateKey(password, salt);
+        byte[] salt = keyService.generateSalt();
+        SecretKey secretKey = keyService.generateKey(password, salt);
 
         Cipher cipher = Cipher.getInstance(AES_ALGORITHM);
-        // Generar IV aleatorio
-        SecureRandom random = new SecureRandom();
-        byte[] iv = new byte[IV_LENGTH_BYTES]; // AES block size es 128 bits (16 bytes)
-        random.nextBytes(iv);
+        
+        byte[] iv = keyService.generateIV();
         IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
 
         cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivParameterSpec);
@@ -152,7 +152,7 @@ public class MainApp {
         bis.close();
 
 
-        SecretKey secretKey = generateKey(password, salt);
+        SecretKey secretKey = keyService.generateKey(password, salt);
 
         Cipher cipher = Cipher.getInstance(AES_ALGORITHM);
         cipher.init(Cipher.DECRYPT_MODE, secretKey, ivParameterSpec);
