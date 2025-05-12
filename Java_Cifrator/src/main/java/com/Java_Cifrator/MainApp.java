@@ -1,6 +1,7 @@
 package com.Java_Cifrator;
 
 import com.Java_Cifrator.core.CryptoConstants;
+import com.Java_Cifrator.service.FileHandler;
 import com.Java_Cifrator.service.HashService;
 import com.Java_Cifrator.service.KeyService;
 
@@ -29,7 +30,7 @@ public class MainApp {
     private static final Scanner scanner = new Scanner(System.in);
     private static final HashService hashService = new HashService();
     private static final KeyService keyService = new KeyService();
-
+    private static final FileHandler fileHandler = new FileHandler();
     public static void main(String[] args) {
         boolean exit = false;
 
@@ -82,34 +83,17 @@ public class MainApp {
 
     }
 
-    private static SecretKey generateKey(String password, byte[] salt)
-            throws NoSuchAlgorithmException, InvalidKeySpecException {
-        SecretKeyFactory factory = SecretKeyFactory.getInstance(PBKDF2_ALGORITHM);
-        KeySpec spec = new PBEKeySpec(password.toCharArray(), salt, ITERATION_COUNT, KEY_LENGTH_BITS);
-        SecretKey tmp = factory.generateSecret(spec);
-        return new SecretKeySpec(tmp.getEncoded(), "AES"); // Clave específica para AES
-    }
-
-    private static byte[] generateSalt() {
-        SecureRandom random = new SecureRandom();
-        byte[] salt = new byte[SALT_LENGTH_BYTES];
-        random.nextBytes(salt);
-        return salt;
-    }
-
-    // Dentro de la clase FileEncryptorDecryptor
-
     public static void encryptFile(String inputFilePath, String outputFilePath, String password)
             throws Exception {
 
-        byte[] fileBytes = Files.readAllBytes(Paths.get(inputFilePath));
+        byte[] fileBytes = fileHandler.readBytes(inputFilePath);
         byte[] originalHash = hashService.calculateSHA256(fileBytes);
 
         byte[] salt = keyService.generateSalt();
         SecretKey secretKey = keyService.generateKey(password, salt);
 
         Cipher cipher = Cipher.getInstance(AES_ALGORITHM);
-        
+
         byte[] iv = keyService.generateIV();
         IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
 
@@ -131,7 +115,7 @@ public class MainApp {
     public static void decryptFile(String inputFilePath, String outputFilePath, String password)
             throws Exception {
 
-        byte[] encryptedFileBytes = Files.readAllBytes(Paths.get(inputFilePath));
+        byte[] encryptedFileBytes = fileHandler.readBytes(inputFilePath);
 
         // Extraer salt, IV, hash almacenado y datos cifrados
         // Asumimos que los tamaños son fijos como se definió
@@ -167,7 +151,7 @@ public class MainApp {
 
 
         // Escribir archivo descifrado
-        Files.write(Paths.get(outputFilePath), decryptedBytes);
+        fileHandler.writeBytes(outputFilePath, decryptedBytes);
         System.out.println("Archivo descifrado (potencialmente) en: " + outputFilePath);
 
         // Verificar integridad
