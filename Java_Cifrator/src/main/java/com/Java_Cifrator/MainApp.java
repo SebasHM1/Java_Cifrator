@@ -40,14 +40,7 @@ public class MainApp {
 
     private static boolean menu (Scanner scanner, CryptoService cryptoService) throws Exception {
 
-        System.out.println("""
-                Seleccione una opcion:
-                
-                1) Cifrar archivo 
-                2) Descifrar archivo
-                3) Salir
-                
-                """);
+
 
         int choice = Integer.parseInt(scanner.nextLine());
 

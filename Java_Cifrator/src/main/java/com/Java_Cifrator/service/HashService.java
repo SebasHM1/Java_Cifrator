@@ -1,8 +1,11 @@
 package com.Java_Cifrator.service;
+
+import org.springframework.stereotype.Service;
 import com.Java_Cifrator.core.CryptoConstants;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+@Service
 public class HashService {
     public byte[] calculateSHA256(byte[] data) throws NoSuchAlgorithmException {
         MessageDigest digest = MessageDigest.getInstance(CryptoConstants.HASH_ALGORITHM);
