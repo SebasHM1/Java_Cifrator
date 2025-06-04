@@ -54,7 +54,7 @@ public class MainApp {
                 System.out.print("Ingrese la contraseña: ");
                 String password = scanner.nextLine();
 
-                cryptoService.encryptFile(inputFile, outputFile, password);
+                cryptoService.encryptFile(inputFile.getBytes(), password);
                 System.out.println("Archivo cifrado correctamente en: " + outputFile);
                 return false;
             } else if (choice == 2) {
@@ -66,7 +66,7 @@ public class MainApp {
                 System.out.print("Ingrese la contraseña: ");
                 String password = scanner.nextLine();
 
-                cryptoService.decryptFileAndVerify(inputFile, outputFile, password);
+                cryptoService.decryptFileAndVerify(inputFile.getBytes(), password);
                 return false;
             } else if (choice == 3) {
                 System.out.println("Saliendo");

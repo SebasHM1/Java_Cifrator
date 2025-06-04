@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.KeyPair;
 import java.security.PublicKey;
 import java.util.Base64;
@@ -36,23 +38,19 @@ public class CryptoController {
     @PostMapping("/encrypt")
     public ResponseEntity<Resource> encryptFile(
             @RequestParam("file") MultipartFile file,
-            @RequestParam("publicKey") String publicKeyBase64) {
+            @RequestParam("publicKey") String password) {
         try {
-            // Decode the public key
-            byte[] publicKeyBytes = Base64.getDecoder().decode(publicKeyBase64);
-            PublicKey publicKey = keyService.getPublicKeyFromBytes(publicKeyBytes);
 
-            // Process the file
-            byte[] fileContent = file.getBytes();
-            byte[] encryptedContent = cryptoService.encrypt(fileContent, publicKey);
+            byte[] inputBytes = file.getBytes();
+            byte[] encryptedData = cryptoService.encryptFile(inputBytes, password);
 
             // Create response
-            ByteArrayResource resource = new ByteArrayResource(encryptedContent);
+            ByteArrayResource resource = new ByteArrayResource(encryptedData);
             
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=encrypted_" + file.getOriginalFilename())
                     .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                    .contentLength(encryptedContent.length)
+                    .contentLength(encryptedData.length)
                     .body(resource);
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
@@ -62,26 +60,20 @@ public class CryptoController {
     @PostMapping("/decrypt")
     public ResponseEntity<Resource> decryptFile(
             @RequestParam("file") MultipartFile file,
-            @RequestParam("privateKey") String privateKeyBase64) {
+            @RequestParam("privateKey") String password) {
         try {
-            // Decode the private key
-            byte[] privateKeyBytes = Base64.getDecoder().decode(privateKeyBase64);
-            KeyPair keyPair = keyService.getKeyPairFromPrivateKeyBytes(privateKeyBytes);
-
-            // Process the file
-            byte[] fileContent = file.getBytes();
-            byte[] decryptedContent = cryptoService.decrypt(fileContent, keyPair.getPrivate());
+            byte[] inputBytes = file.getBytes();
+            byte[] decryptedData = cryptoService.decryptFileAndVerify(inputBytes, password);
 
             // Create response
-            ByteArrayResource resource = new ByteArrayResource(decryptedContent);
+            ByteArrayResource resource = new ByteArrayResource(decryptedData);
             
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=decrypted_" + file.getOriginalFilename())
                     .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                    .contentLength(decryptedContent.length)
+                    .contentLength(decryptedData.length)
                     .body(resource);
         } catch (Exception e) {
-            // Devuelve el mensaje de error en el body
             return ResponseEntity.badRequest()
                 .header(HttpHeaders.CONTENT_TYPE, "text/plain")
                 .body(new ByteArrayResource(e.getMessage().getBytes()));

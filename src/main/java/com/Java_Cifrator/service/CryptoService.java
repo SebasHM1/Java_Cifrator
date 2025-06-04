@@ -28,8 +28,7 @@ public class CryptoService {
         this.fileHandler = fileHandler;
     }
 
-    public void encryptFile(String inputFilePath, String outputFilePath, String password) throws Exception {
-        byte[] fileBytes = fileHandler.readBytes(inputFilePath);
+    public byte[] encryptFile(byte[] fileBytes, String password) throws Exception {
         byte[] originalHash = hashService.calculateSHA256(fileBytes);
 
         byte[] salt = keyService.generateSalt();
@@ -41,18 +40,16 @@ public class CryptoService {
         cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivParameterSpec);
         byte[] encryptedBytes = cipher.doFinal(fileBytes);
 
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-             FileOutputStream fos = new FileOutputStream(outputFilePath)) {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             baos.write(salt);
             baos.write(iv);
             baos.write(originalHash);
             baos.write(encryptedBytes);
-            fos.write(baos.toByteArray());
+            return baos.toByteArray();
         }
     }
 
-    public void decryptFileAndVerify(String inputFilePath, String outputFilePath, String password) throws Exception {
-        byte[] encryptedFileBytes = fileHandler.readBytes(inputFilePath);
+    public byte[] decryptFileAndVerify(byte[] encryptedFileBytes, String password) throws Exception {
 
         ByteArrayInputStream bis = new ByteArrayInputStream(encryptedFileBytes);
         byte[] salt = new byte[CryptoConstants.SALT_LENGTH_BYTES];
@@ -78,8 +75,8 @@ public class CryptoService {
             throw e;
         }
 
-        fileHandler.writeBytes(outputFilePath, decryptedBytes);
-        System.out.println("Archivo descifrado (maybe) en: " + outputFilePath);
+        //fileHandler.writeBytes(outputFilePath, decryptedBytes);
+        //System.out.println("Archivo descifrado (maybe) en: " + outputFilePath);
 
         byte[] newHash = hashService.calculateSHA256(decryptedBytes);
         boolean integrityCheck = Arrays.equals(newHash, storedHash);
@@ -91,68 +88,7 @@ public class CryptoService {
             System.out.println("Hash esperado: " + hashService.bytesToHex(storedHash));
             System.out.println("Hash calculado: " + hashService.bytesToHex(newHash));
         }
-    }
 
-    public byte[] encrypt(byte[] data, PublicKey publicKey) throws Exception {
-        // Generate a random AES key
-        KeyGenerator keyGen = KeyGenerator.getInstance("AES");
-        keyGen.init(256);
-        SecretKey aesKey = keyGen.generateKey();
-
-        // Encrypt the data with AES
-        Cipher aesCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-        byte[] iv = keyService.generateIV();
-        IvParameterSpec ivSpec = new IvParameterSpec(iv);
-        aesCipher.init(Cipher.ENCRYPT_MODE, aesKey, ivSpec);
-        byte[] encryptedData = aesCipher.doFinal(data);
-
-        // Encrypt the AES key with RSA
-        Cipher rsaCipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-        rsaCipher.init(Cipher.ENCRYPT_MODE, publicKey);
-        byte[] encryptedKey = rsaCipher.doFinal(aesKey.getEncoded());
-
-        // Combine everything into a single byte array
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        
-        // Write the length of the encrypted key as a 4-byte integer
-        outputStream.write((encryptedKey.length >>> 24) & 0xFF);
-        outputStream.write((encryptedKey.length >>> 16) & 0xFF);
-        outputStream.write((encryptedKey.length >>> 8) & 0xFF);
-        outputStream.write((encryptedKey.length >>> 0) & 0xFF);
-        
-        outputStream.write(encryptedKey);        // Write the encrypted key
-        outputStream.write(iv);                 // Write the IV
-        outputStream.write(encryptedData);      // Write the encrypted data
-
-        return outputStream.toByteArray();
-    }
-
-    public byte[] decrypt(byte[] encryptedData, PrivateKey privateKey) throws Exception {
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(encryptedData);
-
-        // Read the encrypted key length as a 4-byte integer
-        int keyLength = (inputStream.read() << 24) + (inputStream.read() << 16) + (inputStream.read() << 8) + (inputStream.read() << 0);
-        byte[] encryptedKey = new byte[keyLength];
-        inputStream.read(encryptedKey);
-
-        // Read the IV
-        byte[] iv = new byte[CryptoConstants.IV_LENGTH_BYTES];
-        inputStream.read(iv);
-        IvParameterSpec ivSpec = new IvParameterSpec(iv);
-
-        // Read the encrypted data
-        byte[] data = new byte[inputStream.available()];
-        inputStream.read(data);
-
-        // Decrypt the AES key with RSA
-        Cipher rsaCipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-        rsaCipher.init(Cipher.DECRYPT_MODE, privateKey);
-        byte[] decryptedKey = rsaCipher.doFinal(encryptedKey);
-        SecretKey aesKey = new SecretKeySpec(decryptedKey, "AES");
-
-        // Decrypt the data with AES
-        Cipher aesCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-        aesCipher.init(Cipher.DECRYPT_MODE, aesKey, ivSpec);
-        return aesCipher.doFinal(data);
+        return decryptedBytes;
     }
 }
